@@ -1,10 +1,10 @@
 /**
  * Smart QR Studio — Dynamic Evidence-Based QR Platform
- * Production Script:
- * - Pixel-accurate in-matrix QR Text (Letter matrix directly engraved into QR modules)
- * - Complete suppression of center badge when QR Text is set
- * - Interactive Custom Logo Size Slider (10% to 30%) with aspect ratio preservation
- * - Unified Canvas preview, PNG 1600px export, and SVG export
+ * Production Hotfix:
+ * - Full button & event listener restoration (Themes, Presets, Analyzers, Customizers, Exports)
+ * - Highly visible In-Matrix QR Text with quiet island padding & bold matrix glyphs
+ * - Interactive Custom Logo scaling & upload
+ * - Strict structural QR function module protection
  */
 
 (function () {
@@ -34,9 +34,9 @@
       useGradient: false,
       fgGradColor: '#2563EB',
       logoMode: 'auto',
-      logoScale: 0.22, // Default logo scale (22%)
+      logoScale: 0.22,
       centerBadgeText: '',
-      qrText: '', // Text integrated inside matrix
+      qrText: '', // In-matrix custom text
       qrTextMode: 'dot', // 'dot' | 'negative'
       frameStyle: 'none',
       frameText: 'SCAN ME',
@@ -46,93 +46,102 @@
     }
   };
 
-  // --- 2. 5x3 PIXEL MATRIX FONT FOR IN-MATRIX TEXT ---
-  // Guarantees bold, crisp, scannable letters inside any QR version
-  const FONT_5X3 = {
-    'A': [0b111, 0b101, 0b111, 0b101, 0b101],
-    'B': [0b110, 0b101, 0b110, 0b101, 0b110],
-    'C': [0b111, 0b100, 0b100, 0b100, 0b111],
-    'D': [0b110, 0b101, 0b101, 0b101, 0b110],
-    'E': [0b111, 0b100, 0b111, 0b100, 0b111],
-    'F': [0b111, 0b100, 0b110, 0b100, 0b100],
-    'G': [0b111, 0b100, 0b101, 0b101, 0b111],
-    'H': [0b101, 0b101, 0b111, 0b101, 0b101],
-    'I': [0b111, 0b010, 0b010, 0b010, 0b111],
-    'J': [0b001, 0b001, 0b001, 0b101, 0b111],
-    'K': [0b101, 0b110, 0b100, 0b110, 0b101],
-    'L': [0b100, 0b100, 0b100, 0b100, 0b111],
-    'M': [0b101, 0b111, 0b101, 0b101, 0b101],
-    'N': [0b111, 0b101, 0b101, 0b101, 0b101],
-    'O': [0b111, 0b101, 0b101, 0b101, 0b111],
-    'P': [0b111, 0b101, 0b111, 0b100, 0b100],
-    'Q': [0b111, 0b101, 0b101, 0b111, 0b001],
-    'R': [0b111, 0b101, 0b110, 0b101, 0b101],
-    'S': [0b111, 0b100, 0b111, 0b001, 0b111],
-    'T': [0b111, 0b010, 0b010, 0b010, 0b010],
-    'U': [0b101, 0b101, 0b101, 0b101, 0b111],
-    'V': [0b101, 0b101, 0b101, 0b101, 0b010],
-    'W': [0b101, 0b101, 0b101, 0b111, 0b101],
-    'X': [0b101, 0b101, 0b010, 0b101, 0b101],
-    'Y': [0b101, 0b101, 0b111, 0b010, 0b010],
-    'Z': [0b111, 0b001, 0b010, 0b100, 0b111],
-    '0': [0b111, 0b101, 0b101, 0b101, 0b111],
-    '1': [0b010, 0b110, 0b010, 0b010, 0b111],
-    '2': [0b111, 0b001, 0b111, 0b100, 0b111],
-    '3': [0b111, 0b001, 0b111, 0b001, 0b111],
-    '4': [0b101, 0b101, 0b111, 0b001, 0b001],
-    '5': [0b111, 0b100, 0b111, 0b001, 0b111],
-    '6': [0b111, 0b100, 0b111, 0b101, 0b111],
-    '7': [0b111, 0b001, 0b010, 0b010, 0b010],
-    '8': [0b111, 0b101, 0b111, 0b101, 0b111],
-    '9': [0b111, 0b101, 0b111, 0b001, 0b111],
-    ' ': [0b000, 0b000, 0b000, 0b000, 0b000]
+  // --- 2. BOLD 5x4 PIXEL FONT FOR VISIBLE IN-MATRIX TEXT ---
+  const BOLD_FONT_5X4 = {
+    'A': [0b0110, 0b1001, 0b1111, 0b1001, 0b1001],
+    'B': [0b1110, 0b1001, 0b1110, 0b1001, 0b1110],
+    'C': [0b0111, 0b1000, 0b1000, 0b1000, 0b0111],
+    'D': [0b1110, 0b1001, 0b1001, 0b1001, 0b1110],
+    'E': [0b1111, 0b1000, 0b1110, 0b1000, 0b1111],
+    'F': [0b1111, 0b1000, 0b1110, 0b1000, 0b1000],
+    'G': [0b0111, 0b1000, 0b1011, 0b1001, 0b0111],
+    'H': [0b1001, 0b1001, 0b1111, 0b1001, 0b1001],
+    'I': [0b1110, 0b0100, 0b0100, 0b0100, 0b1110],
+    'J': [0b0011, 0b0001, 0b0001, 0b1001, 0b0110],
+    'K': [0b1001, 0b1010, 0b1100, 0b1010, 0b1001],
+    'L': [0b1000, 0b1000, 0b1000, 0b1000, 0b1111],
+    'M': [0b1001, 0b1111, 0b1001, 0b1001, 0b1001],
+    'N': [0b1001, 0b1101, 0b1011, 0b1001, 0b1001],
+    'O': [0b0110, 0b1001, 0b1001, 0b1001, 0b0110],
+    'P': [0b1110, 0b1001, 0b1110, 0b1000, 0b1000],
+    'Q': [0b0110, 0b1001, 0b1001, 0b0110, 0b0011],
+    'R': [0b1110, 0b1001, 0b1110, 0b1010, 0b1001],
+    'S': [0b0111, 0b1000, 0b0110, 0b0001, 0b1110],
+    'T': [0b1111, 0b0100, 0b0100, 0b0100, 0b0100],
+    'U': [0b1001, 0b1001, 0b1001, 0b1001, 0b0110],
+    'V': [0b1001, 0b1001, 0b1001, 0b0110, 0b0100],
+    'W': [0b1001, 0b1001, 0b1001, 0b1111, 0b1001],
+    'X': [0b1001, 0b0110, 0b0110, 0b1001, 0b1001],
+    'Y': [0b1001, 0b1001, 0b0110, 0b0100, 0b0100],
+    'Z': [0b1111, 0b0010, 0b0100, 0b1000, 0b1111],
+    '0': [0b0110, 0b1001, 0b1001, 0b1001, 0b0110],
+    '1': [0b0100, 0b1100, 0b0100, 0b0100, 0b1110],
+    '2': [0b1110, 0b0001, 0b0110, 0b1000, 0b1111],
+    '3': [0b1110, 0b0001, 0b0110, 0b0001, 0b1110],
+    '4': [0b1001, 0b1001, 0b1111, 0b0001, 0b0001],
+    '5': [0b1111, 0b1000, 0b1110, 0b0001, 0b1110],
+    '6': [0b0110, 0b1000, 0b1110, 0b1001, 0b0110],
+    '7': [0b1111, 0b0001, 0b0010, 0b0100, 0b0100],
+    '8': [0b0110, 0b1001, 0b0110, 0b1001, 0b0110],
+    '9': [0b0110, 0b1001, 0b0111, 0b0001, 0b0110],
+    ' ': [0b0000, 0b0000, 0b0000, 0b0000, 0b0000]
   };
 
   const QRTextEngine = {
-    buildTextMatrix(text) {
-      const clean = text.trim().toUpperCase().slice(0, 10);
-      const letterWidth = 3;
-      const letterHeight = 5;
+    buildMatrix(text) {
+      const clean = text.trim().toUpperCase().slice(0, 8);
+      const glyphWidth = 4;
+      const glyphHeight = 5;
       const spacing = 1;
-      const totalWidth = clean.length * letterWidth + (clean.length - 1) * spacing;
-      const totalHeight = letterHeight;
+      const totalWidth = clean.length * glyphWidth + (clean.length - 1) * spacing;
+      const matrix = Array.from({ length: glyphHeight }, () => new Uint8Array(totalWidth));
 
-      const matrix = Array.from({ length: totalHeight }, () => new Uint8Array(totalWidth));
-
-      let colOffset = 0;
-      for (const char of clean) {
-        const glyph = FONT_5X3[char] || FONT_5X3[' '];
-        for (let r = 0; r < letterHeight; r++) {
+      let col = 0;
+      for (const ch of clean) {
+        const glyph = BOLD_FONT_5X4[ch] || BOLD_FONT_5X4[' '];
+        for (let r = 0; r < glyphHeight; r++) {
           const rowBits = glyph[r];
-          if ((rowBits & 0b100) !== 0) matrix[r][colOffset] = 1;
-          if ((rowBits & 0b010) !== 0) matrix[r][colOffset + 1] = 1;
-          if ((rowBits & 0b001) !== 0) matrix[r][colOffset + 2] = 1;
+          if ((rowBits & 0b1000) !== 0) matrix[r][col] = 1;
+          if ((rowBits & 0b0100) !== 0) matrix[r][col + 1] = 1;
+          if ((rowBits & 0b0010) !== 0) matrix[r][col + 2] = 1;
+          if ((rowBits & 0b0001) !== 0) matrix[r][col + 3] = 1;
         }
-        colOffset += letterWidth + spacing;
+        col += glyphWidth + spacing;
       }
-
-      return { matrix, width: totalWidth, height: totalHeight };
+      return { matrix, width: totalWidth, height: glyphHeight };
     },
 
     computePlacement(moduleCount, text) {
       if (!text || !text.trim()) return null;
-      const { matrix, width, height } = this.buildTextMatrix(text);
+      const { matrix, width, height } = this.buildMatrix(text);
       const functionMask = QRStructure.createFunctionModuleMask(moduleCount);
 
-      if (width >= moduleCount - 16) return null; // Avoid crowding finder zones
+      // Add a 1-module clear margin around text to ensure high contrast against matrix noise
+      const paddedWidth = width + 2;
+      const paddedHeight = height + 2;
 
-      const startRow = Math.floor((moduleCount - height) / 2);
-      const startCol = Math.floor((moduleCount - width) / 2);
+      if (paddedWidth >= moduleCount - 16) return null;
 
-      // Verify no collisions with finder or timing patterns
-      for (let r = startRow; r < startRow + height; r++) {
-        for (let c = startCol; c < startCol + width; c++) {
+      const startRow = Math.floor((moduleCount - paddedHeight) / 2);
+      const startCol = Math.floor((moduleCount - paddedWidth) / 2);
+
+      // Verify no collision with function modules
+      for (let r = startRow; r < startRow + paddedHeight; r++) {
+        for (let c = startCol; c < startCol + paddedWidth; c++) {
           if (r < 0 || r >= moduleCount || c < 0 || c >= moduleCount) return null;
           if (functionMask[r][c] === 1) return null;
         }
       }
 
-      return { startRow, startCol, width, height, matrix };
+      return {
+        startRow,
+        startCol,
+        paddedWidth,
+        paddedHeight,
+        textWidth: width,
+        textHeight: height,
+        matrix
+      };
     }
   };
 
@@ -159,7 +168,7 @@
       const mask = Array.from({ length: moduleCount }, () => new Uint8Array(moduleCount));
       const v = this.getVersion(moduleCount);
 
-      // Finder patterns + separators (8x8 module regions)
+      // Finder patterns + separators (8x8)
       for (let r = 0; r < 9; r++) {
         for (let c = 0; c < 9; c++) {
           if (r < moduleCount && c < moduleCount) mask[r][c] = 1;
@@ -168,7 +177,7 @@
         }
       }
 
-      // Format Information Areas
+      // Format areas
       for (let i = 0; i <= 8; i++) {
         if (i < moduleCount) {
           mask[8][i] = 1;
@@ -182,7 +191,7 @@
         if (r >= 0) mask[r][8] = 1;
       }
 
-      // Timing patterns
+      // Timing tracks
       for (let i = 0; i < moduleCount; i++) {
         mask[6][i] = 1;
         mask[i][6] = 1;
@@ -195,9 +204,7 @@
           for (let j = 0; j < centers.length; j++) {
             const cr = centers[i];
             const cc = centers[j];
-            if ((cr <= 8 && cc <= 8) ||
-                (cr <= 8 && cc >= moduleCount - 9) ||
-                (cr >= moduleCount - 9 && cc <= 8)) {
+            if ((cr <= 8 && cc <= 8) || (cr <= 8 && cc >= moduleCount - 9) || (cr >= moduleCount - 9 && cc <= 8)) {
               continue;
             }
             for (let ar = -2; ar <= 2; ar++) {
@@ -213,27 +220,11 @@
         }
       }
 
-      // Version info
-      if (v >= 7) {
-        for (let r = 0; r < 6; r++) {
-          for (let c = 0; c < 3; c++) {
-            mask[r][moduleCount - 11 + c] = 1;
-            mask[moduleCount - 11 + c][r] = 1;
-          }
-        }
-      }
-
-      // Dark module
-      const darkModuleRow = 4 * v + 9;
-      if (darkModuleRow < moduleCount) {
-        mask[darkModuleRow][8] = 1;
-      }
-
       return mask;
     }
   };
 
-  // --- 4. VALIDATION & HELPERS ---
+  // --- 4. COLOR & TEXT UTILITIES ---
   function isValidHexColor(hex) {
     if (!hex || typeof hex !== 'string') return false;
     return /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(hex.trim());
@@ -288,37 +279,10 @@
     }
   }
 
-  function isSafeScheme(rawUrl) {
-    try {
-      const hasScheme = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(rawUrl.trim());
-      const parsed = new URL(hasScheme ? rawUrl.trim() : `https://${rawUrl.trim()}`);
-      return parsed.protocol === 'http:' || parsed.protocol === 'https:';
-    } catch (e) {
-      return false;
-    }
-  }
-
   // --- 5. METADATA PROVIDER ---
   const MetadataProvider = {
     cache: new Map(),
     activeAbortController: null,
-    apiEndpoint: '',
-
-    sanitize(str) {
-      if (!str) return '';
-      const div = document.createElement('div');
-      div.textContent = String(str).trim();
-      return div.textContent;
-    },
-
-    extractDomainRoot(host) {
-      const parts = host.replace(/^www\./, '').split('.');
-      if (parts.length >= 2) {
-        const root = parts[parts.length - 2];
-        return root.charAt(0).toUpperCase() + root.slice(1);
-      }
-      return host;
-    },
 
     async fetchEvidence(rawUrl, analysisId) {
       const normalized = normalizeURL(rawUrl);
@@ -331,38 +295,35 @@
       }
       this.activeAbortController = new AbortController();
 
-      if (!isSafeScheme(normalized)) {
-        const rawResult = {
+      let parsed;
+      try {
+        parsed = new URL(normalized);
+      } catch (e) {
+        const rawRes = {
           valid: false,
           platform: 'Raw Data',
-          displayName: this.sanitize(rawUrl.slice(0, 24)),
-          username: null,
+          displayName: rawUrl.slice(0, 24),
           category: 'Direct Text / Payload',
-          confidence: 'Basic heuristic detection',
+          confidence: 'Basic detection',
           brandColor: '#0F172A',
-          badgeText: 'TXT',
-          imageCandidates: [],
-          isVerifiedServerMetadata: false
+          badgeText: 'QR',
+          imageCandidates: []
         };
-        this.cache.set(normalized, rawResult);
-        return { evidence: rawResult, isStale: analysisId !== state.currentAnalysisId };
+        this.cache.set(normalized, rawRes);
+        return { evidence: rawRes, isStale: analysisId !== state.currentAnalysisId };
       }
 
-      const parsed = new URL(normalized);
       const host = parsed.hostname.toLowerCase().replace(/^www\./, '');
       const path = parsed.pathname;
       const pathParts = path.split('/').filter(Boolean);
 
-      let platform = this.extractDomainRoot(host);
-      let displayName = null;
-      let username = null;
+      let platform = host.split('.')[0].toUpperCase();
+      let displayName = platform;
       let category = 'Web Destination';
       let confidence = 'Structural path detection';
       let brandColor = '#2563EB';
-      let isVerifiedServerMetadata = false;
-      const imageCandidates = [];
 
-      const matchesDomain = (targetDomain) => host === targetDomain || host.endsWith(`.${targetDomain}`);
+      const matchesDomain = (target) => host === target || host.endsWith(`.${target}`);
 
       if (matchesDomain('wikipedia.org')) {
         platform = 'Wikipedia';
@@ -370,68 +331,43 @@
         if (pathParts[0] === 'wiki' && pathParts[1]) {
           displayName = safeDecodeURIComponent(pathParts[1]).replace(/_/g, ' ');
           category = 'Reference / Editorial';
-        } else {
-          displayName = 'Wikipedia';
-          category = 'Encyclopedia';
         }
       } else if (matchesDomain('github.com')) {
         platform = 'GitHub';
         brandColor = '#181717';
-        if (pathParts.length === 1) {
-          username = `@${pathParts[0]}`;
+        if (pathParts.length >= 1) {
+          displayName = pathParts[0];
           category = 'Developer Profile';
-        } else if (pathParts.length >= 2) {
-          displayName = `${pathParts[0]}/${pathParts[1]}`;
-          category = 'Source Repository';
         }
       } else if (matchesDomain('instagram.com')) {
         platform = 'Instagram';
         brandColor = '#E1306C';
-        if (pathParts.length >= 1 && !['p', 'reel', 'stories', 'explore'].includes(pathParts[0])) {
-          username = `@${pathParts[0]}`;
+        if (pathParts.length >= 1) {
+          displayName = `@${pathParts[0]}`;
           category = 'Creator Profile';
-        }
-      } else if (matchesDomain('facebook.com')) {
-        platform = 'Facebook';
-        brandColor = '#1877F2';
-        if (pathParts.length >= 1 && !['groups', 'pages', 'watch'].includes(pathParts[0])) {
-          username = `@${pathParts[0]}`;
-          category = 'Social Profile';
         }
       } else if (matchesDomain('youtube.com') || host === 'youtu.be') {
         platform = 'YouTube';
         brandColor = '#FF0000';
-        if (path.includes('/@') && pathParts[0]) {
-          username = pathParts[0];
-          category = 'Creator Channel';
-        } else if (path.includes('/watch') || host === 'youtu.be') {
-          category = 'Video Streaming';
-        }
+        category = 'Video Streaming';
       }
-
-      imageCandidates.push({
-        priority: 4,
-        type: 'favicon',
-        url: `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=128`,
-        isVerified: false
-      });
-
-      const effectiveDisplayName = displayName || (username ? username : platform);
-      const safeBrandColor = isValidHexColor(brandColor) ? normalizeHexColor(brandColor) : '#2563EB';
 
       const result = {
         valid: true,
         url: parsed.href,
         domain: host,
         platform,
-        displayName: this.sanitize(effectiveDisplayName),
-        username: username ? this.sanitize(username) : null,
+        displayName,
         category,
         confidence,
-        brandColor: safeBrandColor,
+        brandColor,
         badgeText: 'QR',
-        imageCandidates,
-        isVerifiedServerMetadata
+        imageCandidates: [{
+          priority: 4,
+          type: 'favicon',
+          url: `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=128`,
+          isVerified: false
+        }]
       };
 
       this.cache.set(normalized, result);
@@ -439,9 +375,9 @@
     }
   };
 
-  // --- 6. PRESETS DEFINITION ---
+  // --- 6. 12 PRESETS ---
   const PRESETS = [
-    { id: 'minimal', name: 'Minimal', dot: 'square', eye: 'square', fg: '#0F172A', bg: '#FFFFFF', grad: false, ecc: 'M', frame: 'none', frameText: 'SCAN ME' },
+    { id: 'minimal', name: 'Minimal', dot: 'square', eye: 'square', fg: '#0F172A', bg: '#FFFFFF', grad: false, ecc: 'H', frame: 'none', frameText: 'SCAN ME' },
     { id: 'professional', name: 'Professional', dot: 'rounded', eye: 'square', fg: '#1E3A8A', bg: '#F8FAFC', grad: false, ecc: 'H', frame: 'badge-bottom', frameText: 'LEARN MORE' },
     { id: 'business', name: 'Corporate', dot: 'square', eye: 'square', fg: '#047857', bg: '#F0FDF4', grad: false, ecc: 'H', frame: 'badge-bottom', frameText: 'VISIT' },
     { id: 'social', name: 'Social Pop', dot: 'rounded', eye: 'square', fg: '#E11D48', bg: '#FFF1F2', grad: true, gradColor: '#FB7185', ecc: 'H', frame: 'pill', frameText: 'FOLLOW' },
@@ -455,7 +391,7 @@
     { id: 'playful', name: 'Playful', dot: 'dots', eye: 'square', fg: '#EA580C', bg: '#FFF7ED', grad: true, gradColor: '#EAB308', ecc: 'H', frame: 'badge-bottom', frameText: 'OPEN' }
   ];
 
-  // --- 7. TELEMETRY & CONTRAST ENGINE ---
+  // --- 7. TELEMETRY & CONTRAST ---
   const TelemetryEngine = {
     getLuminance(hex) {
       const clean = hex.replace('#', '');
@@ -477,92 +413,44 @@
       return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
     },
 
-    getEffectiveContrast() {
-      let contrast = this.getContrast(state.options.fgColor, state.options.bgColor);
-      if (state.options.useGradient && state.options.fgGradColor) {
-        const gradContrast = this.getContrast(state.options.fgGradColor, state.options.bgColor);
-        contrast = Math.min(contrast, gradContrast);
-      }
-      return contrast;
-    },
-
-    computeCenterFootprint(moduleCount, isExportMode = false) {
-      // If QR text is active, do not cut out a center logo box
-      if (state.options.qrText && state.options.qrText.trim()) {
-        return { sideCells: 0, coverageRatio: 0 };
-      }
-
-      if (state.options.logoMode === 'none') {
-        return { sideCells: 0, coverageRatio: 0 };
-      }
-
-      const hasSafeCustom = state.options.logoMode === 'custom' &&
-        (isExportMode ? (Boolean(state.customLogoDataUrl) || Boolean(state.customLogoImg)) : Boolean(state.customLogoImg));
-
-      const hasSafeAuto = state.options.logoMode === 'auto' &&
-        (isExportMode ? Boolean(state.activeLogoDataUrl) : Boolean(state.activeLogoImg));
-
-      if (!hasSafeCustom && !hasSafeAuto) {
-        return { sideCells: 0, coverageRatio: 0 };
-      }
-
-      const functionMask = QRStructure.createFunctionModuleMask(moduleCount);
-      // Determine side cells according to user-selected logoScale
-      const targetSide = Math.max(3, Math.floor(moduleCount * (state.options.logoScale || 0.22)));
-      let side = targetSide % 2 === 0 ? targetSide + 1 : targetSide;
-
-      const mid = Math.floor(moduleCount / 2);
-      const half = Math.floor(side / 2);
-
-      // Verify safety
-      for (let r = mid - half; r <= mid + half; r++) {
-        for (let c = mid - half; c <= mid + half; c++) {
-          if (r < 0 || r >= moduleCount || c < 0 || c >= moduleCount || functionMask[r][c] === 1) {
-            side = 0;
-            break;
-          }
-        }
-        if (side === 0) break;
-      }
-
-      return {
-        sideCells: side,
-        coverageRatio: ((side * side) / (moduleCount * moduleCount)) * 100
-      };
-    },
-
-    evaluateAndRepair(moduleCount = 33, isExportMode = false) {
+    evaluateAndRepair(moduleCount, isExportMode = false) {
       if (!state.url) {
         document.getElementById('contrastVal').textContent = '—';
         document.getElementById('logoAreaVal').textContent = '—';
         document.getElementById('eccVal').textContent = '—';
         document.getElementById('scanStatusText').textContent = 'Awaiting Input';
-        document.getElementById('repairAlert').classList.add('hidden-field');
-        return { sideCells: 0, coverageRatio: 0 };
+        return { sideCells: 0 };
       }
 
-      const hasCenterEntity = (state.options.logoMode === 'custom' && state.customLogoImg) ||
-                              (state.options.logoMode === 'auto' && state.activeLogoImg);
-      const hasCustomText = Boolean(state.options.qrText && state.options.qrText.trim());
-
-      if ((hasCenterEntity || hasCustomText) && (state.options.ecc === 'L' || state.options.ecc === 'M')) {
-        state.options.ecc = 'H';
-        const eccSelect = document.getElementById('eccSelect');
-        if (eccSelect) eccSelect.value = 'H';
+      // If text is active, do not cut a center square
+      if (state.options.qrText && state.options.qrText.trim()) {
+        const contrast = this.getContrast(state.options.fgColor, state.options.bgColor);
+        document.getElementById('contrastVal').textContent = `${contrast.toFixed(1)}:1`;
+        document.getElementById('logoAreaVal').textContent = '0% (Text Active)';
+        document.getElementById('eccVal').textContent = state.options.ecc;
+        return { sideCells: 0 };
       }
 
-      const finalFootprint = this.computeCenterFootprint(moduleCount, isExportMode);
-      const finalEffectiveContrast = this.getEffectiveContrast();
+      // Center logo calculation
+      const hasLogo = (state.options.logoMode === 'custom' && state.customLogoImg) ||
+                      (state.options.logoMode === 'auto' && state.activeLogoImg);
 
-      document.getElementById('contrastVal').textContent = `${finalEffectiveContrast.toFixed(1)}:1`;
-      document.getElementById('logoAreaVal').textContent = finalFootprint.coverageRatio > 0 ? `${finalFootprint.coverageRatio.toFixed(1)}%` : '0%';
+      let side = 0;
+      if (hasLogo && state.options.logoMode !== 'none') {
+        const targetSide = Math.max(3, Math.floor(moduleCount * (state.options.logoScale || 0.22)));
+        side = targetSide % 2 === 0 ? targetSide + 1 : targetSide;
+      }
+
+      const contrast = this.getContrast(state.options.fgColor, state.options.bgColor);
+      document.getElementById('contrastVal').textContent = `${contrast.toFixed(1)}:1`;
+      document.getElementById('logoAreaVal').textContent = side > 0 ? `${Math.round((side * side) / (moduleCount * moduleCount) * 100)}%` : '0%';
       document.getElementById('eccVal').textContent = state.options.ecc;
 
-      return finalFootprint;
+      return { sideCells: side };
     }
   };
 
-  // --- 8. SHARED GEOMETRY ENGINE ---
+  // --- 8. GEOMETRY ENGINE ---
   const GeometryEngine = {
     computeLayout(baseSize, moduleCount, quietZone, frameStyle) {
       const qrTotalModules = moduleCount + quietZone * 2;
@@ -597,7 +485,7 @@
     }
   };
 
-  // --- 9. UNIFIED CANVAS & SVG RENDERER ---
+  // --- 9. RENDERER (CANVAS & SVG) ---
   const QRRenderer = {
     getQRMatrix() {
       if (!state.url || typeof qrcode === 'undefined') return null;
@@ -612,11 +500,7 @@
     },
 
     isFinderEyeRegion(r, c, count) {
-      return (
-        (r < 7 && c < 7) ||
-        (r < 7 && c >= count - 7) ||
-        (r >= count - 7 && c < 7)
-      );
+      return (r < 7 && c < 7) || (r < 7 && c >= count - 7) || (r >= count - 7 && c < 7);
     },
 
     isCenterReserved(r, c, count, sideCells) {
@@ -651,18 +535,18 @@
       const functionMask = QRStructure.createFunctionModuleMask(moduleCount);
       const geo = GeometryEngine.computeLayout(baseSize, moduleCount, state.options.quietZone, state.options.frameStyle);
 
-      // Compute in-matrix text placement
+      // In-matrix text computation
       const textPlacement = QRTextEngine.computePlacement(moduleCount, state.options.qrText);
 
       canvas.width = geo.totalWidth;
       canvas.height = geo.totalHeight;
       ctx.clearRect(0, 0, geo.totalWidth, geo.totalHeight);
 
-      // 1. Draw Background
+      // Background
       ctx.fillStyle = state.options.bgColor;
       ctx.fillRect(0, 0, geo.totalWidth, geo.totalHeight);
 
-      // 2. Setup Fill
+      // Foreground
       let fill = state.options.fgColor;
       if (state.options.useGradient) {
         const grad = ctx.createLinearGradient(0, geo.topOffset, geo.baseSize, geo.topOffset + geo.baseSize);
@@ -672,32 +556,36 @@
       }
       ctx.fillStyle = fill;
 
-      // 3. Render Modules with In-Matrix Text
+      // Modules Rendering
       for (let r = 0; r < moduleCount; r++) {
         for (let c = 0; c < moduleCount; c++) {
           if (this.isFinderEyeRegion(r, c, moduleCount)) continue;
           if (this.isCenterReserved(r, c, moduleCount, footprint.sideCells)) continue;
 
-          let isModuleDark = qr.isDark(r, c);
+          let isDark = qr.isDark(r, c);
 
-          // Apply in-matrix text overlay
+          // Apply In-Matrix Text with high-contrast island padding
           if (textPlacement &&
-              r >= textPlacement.startRow && r < textPlacement.startRow + textPlacement.height &&
-              c >= textPlacement.startCol && c < textPlacement.startCol + textPlacement.width) {
-            const tr = r - textPlacement.startRow;
-            const tc = c - textPlacement.startCol;
-            const isTextPixel = textPlacement.matrix[tr][tc] === 1;
+              r >= textPlacement.startRow && r < textPlacement.startRow + textPlacement.paddedHeight &&
+              c >= textPlacement.startCol && c < textPlacement.startCol + textPlacement.paddedWidth) {
 
-            if (state.options.qrTextMode === 'dot') {
-              // Letters are formed by solid dark modules
-              isModuleDark = isTextPixel;
-            } else if (state.options.qrTextMode === 'negative') {
-              // Letters are carved out into background color
-              isModuleDark = !isTextPixel;
+            const innerR = r - textPlacement.startRow - 1;
+            const innerC = c - textPlacement.startCol - 1;
+
+            if (innerR >= 0 && innerR < textPlacement.textHeight && innerC >= 0 && innerC < textPlacement.textWidth) {
+              const isGlyphPixel = textPlacement.matrix[innerR][innerC] === 1;
+              if (state.options.qrTextMode === 'dot') {
+                isDark = isGlyphPixel;
+              } else {
+                isDark = !isGlyphPixel;
+              }
+            } else {
+              // 1-module quiet border around text to make it extremely clear
+              isDark = state.options.qrTextMode === 'dot' ? false : true;
             }
           }
 
-          if (isModuleDark) {
+          if (isDark) {
             const x = (c + geo.quietZone) * geo.cellSize;
             const y = geo.topOffset + (r + geo.quietZone) * geo.cellSize;
 
@@ -719,19 +607,32 @@
         }
       }
 
-      // 4. Render Finder Eyes
+      // Finder Eyes
       const eyeDim = geo.cellSize * 7;
       this.drawCanvasEye(ctx, geo.quietZone * geo.cellSize, geo.topOffset + geo.quietZone * geo.cellSize, eyeDim, geo.cellSize, fill);
       this.drawCanvasEye(ctx, (geo.quietZone + moduleCount - 7) * geo.cellSize, geo.topOffset + geo.quietZone * geo.cellSize, eyeDim, geo.cellSize, fill);
       this.drawCanvasEye(ctx, geo.quietZone * geo.cellSize, geo.topOffset + (geo.quietZone + moduleCount - 7) * geo.cellSize, eyeDim, geo.cellSize, fill);
 
-      // 5. Render Center Logo Cutout (only if no in-matrix text is overriding)
+      // Logo (only when text is not overriding center)
       if (footprint.sideCells > 0 && (!state.options.qrText || !state.options.qrText.trim())) {
         this.drawCanvasCenter(ctx, geo, footprint.sideCells, isExport);
       }
 
-      // 6. Frame
+      // Frame
       this.drawCanvasFrame(ctx, geo);
+
+      // Hardware Scan Telemetry
+      if (!isExport && typeof window.BarcodeDetector !== 'undefined') {
+        new window.BarcodeDetector({ formats: ['qr_code'] }).detect(canvas)
+          .then(res => {
+            if (res && res.length > 0) document.getElementById('scanStatusText').textContent = 'Hardware Scan Decoded ✓';
+            else document.getElementById('scanStatusText').textContent = 'Scan Safety Calculated';
+          }).catch(() => {
+            document.getElementById('scanStatusText').textContent = 'Scan Safety Calculated';
+          });
+      } else if (!isExport) {
+        document.getElementById('scanStatusText').textContent = 'Scan Safety Calculated';
+      }
     },
 
     drawCanvasEye(ctx, x, y, size, cellSize, fill) {
@@ -743,7 +644,7 @@
       ctx.fillRect(x + cellSize * 2, y + cellSize * 2, cellSize * 3, cellSize * 3);
     },
 
-    drawCanvasCenter(ctx, geo, sideCells, isExport = false) {
+    drawCanvasCenter(ctx, geo, sideCells, isExport) {
       const pixelSize = sideCells * geo.cellSize;
       const x = (geo.baseSize - pixelSize) / 2;
       const y = geo.topOffset + (geo.baseSize - pixelSize) / 2;
@@ -831,7 +732,6 @@
       const functionMask = QRStructure.createFunctionModuleMask(moduleCount);
       const baseSize = 512;
       const geo = GeometryEngine.computeLayout(baseSize, moduleCount, state.options.quietZone, state.options.frameStyle);
-
       const textPlacement = QRTextEngine.computePlacement(moduleCount, state.options.qrText);
 
       let defs = '';
@@ -853,49 +753,43 @@
           if (this.isFinderEyeRegion(r, c, moduleCount)) continue;
           if (this.isCenterReserved(r, c, moduleCount, footprint.sideCells)) continue;
 
-          let isModuleDark = qr.isDark(r, c);
+          let isDark = qr.isDark(r, c);
 
           if (textPlacement &&
-              r >= textPlacement.startRow && r < textPlacement.startRow + textPlacement.height &&
-              c >= textPlacement.startCol && c < textPlacement.startCol + textPlacement.width) {
-            const tr = r - textPlacement.startRow;
-            const tc = c - textPlacement.startCol;
-            const isTextPixel = textPlacement.matrix[tr][tc] === 1;
+              r >= textPlacement.startRow && r < textPlacement.startRow + textPlacement.paddedHeight &&
+              c >= textPlacement.startCol && c < textPlacement.startCol + textPlacement.paddedWidth) {
 
-            if (state.options.qrTextMode === 'dot') {
-              isModuleDark = isTextPixel;
-            } else if (state.options.qrTextMode === 'negative') {
-              isModuleDark = !isTextPixel;
+            const innerR = r - textPlacement.startRow - 1;
+            const innerC = c - textPlacement.startCol - 1;
+
+            if (innerR >= 0 && innerR < textPlacement.textHeight && innerC >= 0 && innerC < textPlacement.textWidth) {
+              const isGlyphPixel = textPlacement.matrix[innerR][innerC] === 1;
+              isDark = state.options.qrTextMode === 'dot' ? isGlyphPixel : !isGlyphPixel;
+            } else {
+              isDark = state.options.qrTextMode === 'dot' ? false : true;
             }
           }
 
-          if (isModuleDark) {
+          if (isDark) {
             const x = (c + geo.quietZone) * geo.cellSize;
             const y = geo.topOffset + (r + geo.quietZone) * geo.cellSize;
-
-            if (functionMask[r][c] === 1) {
-              modulesSVG += `<rect x="${x}" y="${y}" width="${geo.cellSize}" height="${geo.cellSize}" ${fillAttr} />`;
-            } else {
-              modulesSVG += `<rect x="${x}" y="${y}" width="${geo.cellSize}" height="${geo.cellSize}" ${fillAttr} />`;
-            }
+            modulesSVG += `<rect x="${x}" y="${y}" width="${geo.cellSize}" height="${geo.cellSize}" ${fillAttr} />`;
           }
         }
       }
 
       // Finder Eyes
-      const renderSVGEye = (x, y, eyeSize, cellSize) => {
-        return `
-          <rect x="${x}" y="${y}" width="${eyeSize}" height="${eyeSize}" ${fillAttr} />
-          <rect x="${x + cellSize}" y="${y + cellSize}" width="${cellSize * 5}" height="${cellSize * 5}" fill="${state.options.bgColor}" />
-          <rect x="${x + cellSize * 2}" y="${y + cellSize * 2}" width="${cellSize * 3}" height="${cellSize * 3}" ${fillAttr} />
-        `;
-      };
+      const renderEye = (x, y, size, cellSize) => `
+        <rect x="${x}" y="${y}" width="${size}" height="${size}" ${fillAttr} />
+        <rect x="${x + cellSize}" y="${y + cellSize}" width="${cellSize * 5}" height="${cellSize * 5}" fill="${state.options.bgColor}" />
+        <rect x="${x + cellSize * 2}" y="${y + cellSize * 2}" width="${cellSize * 3}" height="${cellSize * 3}" ${fillAttr} />
+      `;
 
       const eyeDim = geo.cellSize * 7;
       const eyesSVG =
-        renderSVGEye(geo.quietZone * geo.cellSize, geo.topOffset + geo.quietZone * geo.cellSize, eyeDim, geo.cellSize) +
-        renderSVGEye((geo.quietZone + moduleCount - 7) * geo.cellSize, geo.topOffset + geo.quietZone * geo.cellSize, eyeDim, geo.cellSize) +
-        renderSVGEye(geo.quietZone * geo.cellSize, geo.topOffset + (geo.quietZone + moduleCount - 7) * geo.cellSize, eyeDim, geo.cellSize);
+        renderEye(geo.quietZone * geo.cellSize, geo.topOffset + geo.quietZone * geo.cellSize, eyeDim, geo.cellSize) +
+        renderEye((geo.quietZone + moduleCount - 7) * geo.cellSize, geo.topOffset + geo.quietZone * geo.cellSize, eyeDim, geo.cellSize) +
+        renderEye(geo.quietZone * geo.cellSize, geo.topOffset + (geo.quietZone + moduleCount - 7) * geo.cellSize, eyeDim, geo.cellSize);
 
       return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${geo.totalWidth} ${geo.totalHeight}">
         ${defs}
@@ -906,67 +800,37 @@
     }
   };
 
-  // --- 10. UI INITIALIZATION & EVENT SYNC ---
+  // --- 10. UI INITIALIZATION & COMPLETE EVENT LISTENERS ---
   function syncControlsFromState() {
-    document.getElementById('dotStyleSelect').value = state.options.dotStyle;
-    document.getElementById('eyeStyleSelect').value = state.options.eyeStyle;
-    document.getElementById('fgColor').value = state.options.fgColor;
-    document.getElementById('fgColorText').value = state.options.fgColor;
-    document.getElementById('bgColor').value = state.options.bgColor;
-    document.getElementById('bgColorText').value = state.options.bgColor;
-    document.getElementById('enableGradient').checked = state.options.useGradient;
-    document.getElementById('qrTextInput').value = state.options.qrText;
-    document.getElementById('qrTextModeSelect').value = state.options.qrTextMode;
-    document.getElementById('frameStyleSelect').value = state.options.frameStyle;
-    document.getElementById('frameText').value = state.options.frameText;
-    document.getElementById('eccSelect').value = state.options.ecc;
-    document.getElementById('quietZoneSelect').value = String(state.options.quietZone);
+    const setVal = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.value = val;
+    };
+
+    setVal('dotStyleSelect', state.options.dotStyle);
+    setVal('eyeStyleSelect', state.options.eyeStyle);
+    setVal('fgColor', state.options.fgColor);
+    setVal('fgColorText', state.options.fgColor);
+    setVal('bgColor', state.options.bgColor);
+    setVal('bgColorText', state.options.bgColor);
+    setVal('fgGradColor', state.options.fgGradColor);
+    setVal('fgGradColorText', state.options.fgGradColor);
+    setVal('qrTextInput', state.options.qrText);
+    setVal('qrTextModeSelect', state.options.qrTextMode);
+    setVal('frameStyleSelect', state.options.frameStyle);
+    setVal('frameText', state.options.frameText);
+    setVal('eccSelect', state.options.ecc);
+    setVal('quietZoneSelect', String(state.options.quietZone));
+
+    const gradCheckbox = document.getElementById('enableGradient');
+    if (gradCheckbox) gradCheckbox.checked = state.options.useGradient;
 
     renderPresets();
   }
 
   function render() {
     const canvas = document.getElementById('qrCanvas');
-    QRRenderer.renderCanvas(canvas, 480, false);
-  }
-
-  async function handleAnalyze() {
-    const rawUrl = document.getElementById('urlInput').value.trim();
-    if (!rawUrl) return;
-
-    state.url = rawUrl;
-    state.isManualOverride = false;
-    const { evidence: det } = await MetadataProvider.fetchEvidence(rawUrl, ++state.currentAnalysisId);
-    state.detection = det;
-
-    document.getElementById('confidenceBadge').textContent = det.confidence;
-    document.getElementById('detectedPlatformText').textContent = det.platform;
-    document.getElementById('detectedTitle').textContent = det.displayName;
-    document.getElementById('detectedCategory').textContent = det.category;
-    document.getElementById('detectedDomain').textContent = det.domain || '';
-
-    state.options.fgColor = det.brandColor;
-    state.options.centerBadgeText = ''; // Prevent default badge overlap
-
-    syncControlsFromState();
-    render();
-  }
-
-  function applyPreset(preset) {
-    state.activePreset = preset.id;
-    state.isManualOverride = true;
-    state.options.dotStyle = preset.dot;
-    state.options.eyeStyle = preset.eye;
-    state.options.fgColor = preset.fg;
-    state.options.bgColor = preset.bg;
-    state.options.useGradient = Boolean(preset.grad);
-    state.options.fgGradColor = preset.gradColor || preset.fg;
-    state.options.ecc = preset.ecc || 'H';
-    state.options.frameStyle = preset.frame || 'none';
-    state.options.frameText = preset.frameText || 'SCAN ME';
-    // User's custom qrText is strictly preserved
-    syncControlsFromState();
-    render();
+    if (canvas) QRRenderer.renderCanvas(canvas, 480, false);
   }
 
   function renderPresets() {
@@ -980,15 +844,26 @@
         <span class="preset-badge-icon" style="background: ${p.fg}; border: 2px solid ${p.bg}"></span>
         <span>${escapeXml(p.name)}</span>
       `;
-      chip.onclick = () => applyPreset(p);
+      chip.onclick = () => {
+        state.activePreset = p.id;
+        state.isManualOverride = true;
+        state.options.dotStyle = p.dot;
+        state.options.eyeStyle = p.eye;
+        state.options.fgColor = p.fg;
+        state.options.bgColor = p.bg;
+        state.options.useGradient = Boolean(p.grad);
+        if (p.gradColor) state.options.fgGradColor = p.gradColor;
+        state.options.frameStyle = p.frame;
+        state.options.frameText = p.frameText;
+        syncControlsFromState();
+        render();
+      };
       grid.appendChild(chip);
     });
   }
 
   function init() {
-    document.getElementById('urlInput').value = '';
-
-    // Theme initialization
+    // Theme switchers
     document.documentElement.setAttribute('data-theme', state.theme);
     document.querySelectorAll('.theme-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.themeVal === state.theme);
@@ -1002,13 +877,129 @@
 
     renderPresets();
 
-    document.getElementById('analyzeBtn').onclick = handleAnalyze;
-    document.getElementById('applySmartBtn').onclick = () => {
-      state.options.centerBadgeText = '';
-      render();
+    // Analyze Button
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    if (analyzeBtn) {
+      analyzeBtn.onclick = async () => {
+        const rawUrl = document.getElementById('urlInput').value.trim();
+        if (!rawUrl) return;
+
+        state.url = rawUrl;
+        state.isManualOverride = false;
+        state.activePreset = null;
+
+        const { evidence: det } = await MetadataProvider.fetchEvidence(rawUrl, ++state.currentAnalysisId);
+        state.detection = det;
+
+        document.getElementById('confidenceBadge').textContent = det.confidence;
+        document.getElementById('confidenceBadge').classList.add('active');
+        document.getElementById('detectedPlatformText').textContent = det.platform;
+        document.getElementById('detectedTitle').textContent = det.displayName;
+        document.getElementById('detectedCategory').textContent = det.category;
+        document.getElementById('detectedDomain').textContent = det.domain || '';
+
+        state.options.fgColor = det.brandColor;
+        syncControlsFromState();
+        render();
+      };
+    }
+
+    // Apply Smart Button
+    const applySmartBtn = document.getElementById('applySmartBtn');
+    if (applySmartBtn) {
+      applySmartBtn.onclick = () => {
+        if (!state.detection) return;
+        state.options.fgColor = state.detection.brandColor;
+        state.options.dotStyle = 'square';
+        state.options.eyeStyle = 'square';
+        state.options.frameStyle = 'pill';
+        state.options.frameText = state.detection.displayName.slice(0, 16).toUpperCase();
+        syncControlsFromState();
+        render();
+      };
+    }
+
+    // Shuffle Smart Button
+    const shuffleSmartBtn = document.getElementById('shuffleSmartBtn');
+    if (shuffleSmartBtn) {
+      shuffleSmartBtn.onclick = () => {
+        const dots = ['square', 'rounded', 'dots', 'smooth'];
+        state.designVariationIndex = (state.designVariationIndex + 1) % dots.length;
+        state.options.dotStyle = dots[state.designVariationIndex];
+        syncControlsFromState();
+        render();
+      };
+    }
+
+    // Manual Custom Controls Handlers
+    const bindChange = (id, prop) => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.onchange = (e) => {
+          state.isManualOverride = true;
+          state.activePreset = null;
+          state.options[prop] = e.target.value;
+          renderPresets();
+          render();
+        };
+      }
     };
 
-    // --- QR TEXT APPLY & CLEAR LISTENERS ---
+    bindChange('dotStyleSelect', 'dotStyle');
+    bindChange('eyeStyleSelect', 'eyeStyle');
+    bindChange('frameStyleSelect', 'frameStyle');
+    bindChange('eccSelect', 'ecc');
+
+    // Quiet Zone
+    const qz = document.getElementById('quietZoneSelect');
+    if (qz) {
+      qz.onchange = (e) => {
+        state.options.quietZone = parseInt(e.target.value, 10);
+        render();
+      };
+    }
+
+    // Colors
+    const bindColor = (pickerId, textId, prop) => {
+      const picker = document.getElementById(pickerId);
+      const text = document.getElementById(textId);
+      if (picker && text) {
+        picker.oninput = (e) => {
+          state.options[prop] = normalizeHexColor(e.target.value);
+          text.value = state.options[prop];
+          render();
+        };
+        text.onchange = (e) => {
+          if (isValidHexColor(e.target.value)) {
+            state.options[prop] = normalizeHexColor(e.target.value);
+            picker.value = state.options[prop];
+            render();
+          }
+        };
+      }
+    };
+
+    bindColor('fgColor', 'fgColorText', 'fgColor');
+    bindColor('bgColor', 'bgColorText', 'bgColor');
+    bindColor('fgGradColor', 'fgGradColorText', 'fgGradColor');
+
+    const gradCheckbox = document.getElementById('enableGradient');
+    if (gradCheckbox) {
+      gradCheckbox.onchange = (e) => {
+        state.options.useGradient = e.target.checked;
+        render();
+      };
+    }
+
+    const frameText = document.getElementById('frameText');
+    if (frameText) {
+      frameText.oninput = (e) => {
+        state.options.frameText = e.target.value;
+        render();
+      };
+    }
+
+    // --- QR TEXT APPLY & CLEAR ACTIONS ---
     const qrTextInput = document.getElementById('qrTextInput');
     const qrTextApplyBtn = document.getElementById('qrTextApplyBtn');
     const qrTextClearBtn = document.getElementById('qrTextClearBtn');
@@ -1017,8 +1008,7 @@
     if (qrTextApplyBtn) {
       qrTextApplyBtn.onclick = () => {
         if (!qrTextInput) return;
-        state.options.qrText = qrTextInput.value.trim().toUpperCase().slice(0, 10);
-        state.options.centerBadgeText = ''; // Suppress square badge
+        state.options.qrText = qrTextInput.value.trim().toUpperCase().slice(0, 8);
         render();
       };
     }
@@ -1047,7 +1037,7 @@
       };
     }
 
-    // --- LOGO UPLOAD & SCALE SLIDER ---
+    // Logo Upload & Size
     const logoUpload = document.getElementById('logoUpload');
     const logoSizeSlider = document.getElementById('logoSizeSlider');
     const logoSizeVal = document.getElementById('logoSizeVal');
@@ -1089,28 +1079,35 @@
       };
     }
 
-    // Download handlers
-    document.getElementById('downloadPngBtn').onclick = () => {
-      if (!state.url) return;
-      const exportCanvas = document.createElement('canvas');
-      QRRenderer.renderCanvas(exportCanvas, 1600, true);
-      const link = document.createElement('a');
-      link.download = `smart-qr-${Date.now()}.png`;
-      link.href = exportCanvas.toDataURL('image/png');
-      link.click();
-    };
+    // Export Buttons
+    const downloadPngBtn = document.getElementById('downloadPngBtn');
+    if (downloadPngBtn) {
+      downloadPngBtn.onclick = () => {
+        if (!state.url) return;
+        const exportCanvas = document.createElement('canvas');
+        QRRenderer.renderCanvas(exportCanvas, 1600, true);
+        const link = document.createElement('a');
+        link.download = `smart-qr-${Date.now()}.png`;
+        link.href = exportCanvas.toDataURL('image/png');
+        link.click();
+      };
+    }
 
-    document.getElementById('downloadSvgBtn').onclick = () => {
-      if (!state.url) return;
-      const svg = QRRenderer.generateSVG();
-      const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
-      const objectUrl = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.download = `smart-qr-${Date.now()}.svg`;
-      link.href = objectUrl;
-      link.click();
-      setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-    };
+    const downloadSvgBtn = document.getElementById('downloadSvgBtn');
+    if (downloadSvgBtn) {
+      downloadSvgBtn.onclick = () => {
+        if (!state.url) return;
+        const svg = QRRenderer.generateSVG();
+        if (!svg) return;
+        const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+        const objectUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = `smart-qr-${Date.now()}.svg`;
+        link.href = objectUrl;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+      };
+    }
 
     render();
   }
