@@ -1,10 +1,10 @@
 /**
  * Smart QR Studio — Dynamic Evidence-Based QR Platform
- * Production Hotfix:
- * - Full button & event listener restoration (Themes, Presets, Analyzers, Customizers, Exports)
- * - Highly visible In-Matrix QR Text with quiet island padding & bold matrix glyphs
- * - Interactive Custom Logo scaling & upload
- * - Strict structural QR function module protection
+ * Production Engine:
+ * - Direct Center Text Banner inside QR Matrix
+ * - Fully functional interactive buttons (Analyze, Smart Design, Presets, Sliders, Downloads)
+ * - Safe Custom Logo upload with live scaling slider
+ * - Canvas & SVG full export parity
  */
 
 (function () {
@@ -36,8 +36,7 @@
       logoMode: 'auto',
       logoScale: 0.22,
       centerBadgeText: '',
-      qrText: '', // In-matrix custom text
-      qrTextMode: 'dot', // 'dot' | 'negative'
+      qrText: '', // Text inside center matrix banner
       frameStyle: 'none',
       frameText: 'SCAN ME',
       ecc: 'H',
@@ -46,104 +45,60 @@
     }
   };
 
-  // --- 2. BOLD 5x4 PIXEL FONT FOR VISIBLE IN-MATRIX TEXT ---
-  const BOLD_FONT_5X4 = {
-    'A': [0b0110, 0b1001, 0b1111, 0b1001, 0b1001],
-    'B': [0b1110, 0b1001, 0b1110, 0b1001, 0b1110],
-    'C': [0b0111, 0b1000, 0b1000, 0b1000, 0b0111],
-    'D': [0b1110, 0b1001, 0b1001, 0b1001, 0b1110],
-    'E': [0b1111, 0b1000, 0b1110, 0b1000, 0b1111],
-    'F': [0b1111, 0b1000, 0b1110, 0b1000, 0b1000],
-    'G': [0b0111, 0b1000, 0b1011, 0b1001, 0b0111],
-    'H': [0b1001, 0b1001, 0b1111, 0b1001, 0b1001],
-    'I': [0b1110, 0b0100, 0b0100, 0b0100, 0b1110],
-    'J': [0b0011, 0b0001, 0b0001, 0b1001, 0b0110],
-    'K': [0b1001, 0b1010, 0b1100, 0b1010, 0b1001],
-    'L': [0b1000, 0b1000, 0b1000, 0b1000, 0b1111],
-    'M': [0b1001, 0b1111, 0b1001, 0b1001, 0b1001],
-    'N': [0b1001, 0b1101, 0b1011, 0b1001, 0b1001],
-    'O': [0b0110, 0b1001, 0b1001, 0b1001, 0b0110],
-    'P': [0b1110, 0b1001, 0b1110, 0b1000, 0b1000],
-    'Q': [0b0110, 0b1001, 0b1001, 0b0110, 0b0011],
-    'R': [0b1110, 0b1001, 0b1110, 0b1010, 0b1001],
-    'S': [0b0111, 0b1000, 0b0110, 0b0001, 0b1110],
-    'T': [0b1111, 0b0100, 0b0100, 0b0100, 0b0100],
-    'U': [0b1001, 0b1001, 0b1001, 0b1001, 0b0110],
-    'V': [0b1001, 0b1001, 0b1001, 0b0110, 0b0100],
-    'W': [0b1001, 0b1001, 0b1001, 0b1111, 0b1001],
-    'X': [0b1001, 0b0110, 0b0110, 0b1001, 0b1001],
-    'Y': [0b1001, 0b1001, 0b0110, 0b0100, 0b0100],
-    'Z': [0b1111, 0b0010, 0b0100, 0b1000, 0b1111],
-    '0': [0b0110, 0b1001, 0b1001, 0b1001, 0b0110],
-    '1': [0b0100, 0b1100, 0b0100, 0b0100, 0b1110],
-    '2': [0b1110, 0b0001, 0b0110, 0b1000, 0b1111],
-    '3': [0b1110, 0b0001, 0b0110, 0b0001, 0b1110],
-    '4': [0b1001, 0b1001, 0b1111, 0b0001, 0b0001],
-    '5': [0b1111, 0b1000, 0b1110, 0b0001, 0b1110],
-    '6': [0b0110, 0b1000, 0b1110, 0b1001, 0b0110],
-    '7': [0b1111, 0b0001, 0b0010, 0b0100, 0b0100],
-    '8': [0b0110, 0b1001, 0b0110, 0b1001, 0b0110],
-    '9': [0b0110, 0b1001, 0b0111, 0b0001, 0b0110],
-    ' ': [0b0000, 0b0000, 0b0000, 0b0000, 0b0000]
-  };
+  // --- 2. VALIDATION & COLOR UTILITIES ---
+  function isValidHexColor(hex) {
+    if (!hex || typeof hex !== 'string') return false;
+    return /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(hex.trim());
+  }
 
-  const QRTextEngine = {
-    buildMatrix(text) {
-      const clean = text.trim().toUpperCase().slice(0, 8);
-      const glyphWidth = 4;
-      const glyphHeight = 5;
-      const spacing = 1;
-      const totalWidth = clean.length * glyphWidth + (clean.length - 1) * spacing;
-      const matrix = Array.from({ length: glyphHeight }, () => new Uint8Array(totalWidth));
-
-      let col = 0;
-      for (const ch of clean) {
-        const glyph = BOLD_FONT_5X4[ch] || BOLD_FONT_5X4[' '];
-        for (let r = 0; r < glyphHeight; r++) {
-          const rowBits = glyph[r];
-          if ((rowBits & 0b1000) !== 0) matrix[r][col] = 1;
-          if ((rowBits & 0b0100) !== 0) matrix[r][col + 1] = 1;
-          if ((rowBits & 0b0010) !== 0) matrix[r][col + 2] = 1;
-          if ((rowBits & 0b0001) !== 0) matrix[r][col + 3] = 1;
-        }
-        col += glyphWidth + spacing;
-      }
-      return { matrix, width: totalWidth, height: glyphHeight };
-    },
-
-    computePlacement(moduleCount, text) {
-      if (!text || !text.trim()) return null;
-      const { matrix, width, height } = this.buildMatrix(text);
-      const functionMask = QRStructure.createFunctionModuleMask(moduleCount);
-
-      // Add a 1-module clear margin around text to ensure high contrast against matrix noise
-      const paddedWidth = width + 2;
-      const paddedHeight = height + 2;
-
-      if (paddedWidth >= moduleCount - 16) return null;
-
-      const startRow = Math.floor((moduleCount - paddedHeight) / 2);
-      const startCol = Math.floor((moduleCount - paddedWidth) / 2);
-
-      // Verify no collision with function modules
-      for (let r = startRow; r < startRow + paddedHeight; r++) {
-        for (let c = startCol; c < startCol + paddedWidth; c++) {
-          if (r < 0 || r >= moduleCount || c < 0 || c >= moduleCount) return null;
-          if (functionMask[r][c] === 1) return null;
-        }
-      }
-
-      return {
-        startRow,
-        startCol,
-        paddedWidth,
-        paddedHeight,
-        textWidth: width,
-        textHeight: height,
-        matrix
-      };
+  function normalizeHexColor(hex) {
+    const clean = hex.trim();
+    if (clean.length === 4) {
+      return `#${clean[1]}${clean[1]}${clean[2]}${clean[2]}${clean[3]}${clean[3]}`.toUpperCase();
     }
-  };
+    return clean.toUpperCase();
+  }
+
+  function escapeXml(unsafe) {
+    if (!unsafe) return '';
+    return String(unsafe).replace(/[<>&'"]/g, (c) => {
+      switch (c) {
+        case '<': return '&lt;';
+        case '>': return '&gt;';
+        case '&': return '&amp;';
+        case '\'': return '&apos;';
+        case '"': return '&quot;';
+        default: return c;
+      }
+    });
+  }
+
+  function safeDecodeURIComponent(str) {
+    if (!str) return '';
+    try {
+      return decodeURIComponent(str);
+    } catch (e) {
+      return String(str).replace(/%(?![0-9a-fA-F]{2})/g, '%25');
+    }
+  }
+
+  function normalizeURL(rawUrl) {
+    if (!rawUrl || typeof rawUrl !== 'string') return '';
+    const trimmed = rawUrl.trim();
+    try {
+      const hasScheme = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(trimmed);
+      const parsed = new URL(hasScheme ? trimmed : `https://${trimmed}`);
+      if ((parsed.protocol === 'http:' && parsed.port === '80') ||
+          (parsed.protocol === 'https:' && parsed.port === '443')) {
+        parsed.port = '';
+      }
+      parsed.hostname = parsed.hostname.toLowerCase();
+      if (parsed.pathname === '/') parsed.pathname = '';
+      return parsed.href;
+    } catch (e) {
+      return trimmed;
+    }
+  }
 
   // --- 3. QR SPECIFICATION STRUCTURAL FUNCTION-PATTERN PROTECTION ---
   const QRStructure = {
@@ -224,62 +179,7 @@
     }
   };
 
-  // --- 4. COLOR & TEXT UTILITIES ---
-  function isValidHexColor(hex) {
-    if (!hex || typeof hex !== 'string') return false;
-    return /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(hex.trim());
-  }
-
-  function normalizeHexColor(hex) {
-    const clean = hex.trim();
-    if (clean.length === 4) {
-      return `#${clean[1]}${clean[1]}${clean[2]}${clean[2]}${clean[3]}${clean[3]}`.toUpperCase();
-    }
-    return clean.toUpperCase();
-  }
-
-  function escapeXml(unsafe) {
-    if (!unsafe) return '';
-    return String(unsafe).replace(/[<>&'"]/g, (c) => {
-      switch (c) {
-        case '<': return '&lt;';
-        case '>': return '&gt;';
-        case '&': return '&amp;';
-        case '\'': return '&apos;';
-        case '"': return '&quot;';
-        default: return c;
-      }
-    });
-  }
-
-  function safeDecodeURIComponent(str) {
-    if (!str) return '';
-    try {
-      return decodeURIComponent(str);
-    } catch (e) {
-      return String(str).replace(/%(?![0-9a-fA-F]{2})/g, '%25');
-    }
-  }
-
-  function normalizeURL(rawUrl) {
-    if (!rawUrl || typeof rawUrl !== 'string') return '';
-    const trimmed = rawUrl.trim();
-    try {
-      const hasScheme = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(trimmed);
-      const parsed = new URL(hasScheme ? trimmed : `https://${trimmed}`);
-      if ((parsed.protocol === 'http:' && parsed.port === '80') ||
-          (parsed.protocol === 'https:' && parsed.port === '443')) {
-        parsed.port = '';
-      }
-      parsed.hostname = parsed.hostname.toLowerCase();
-      if (parsed.pathname === '/') parsed.pathname = '';
-      return parsed.href;
-    } catch (e) {
-      return trimmed;
-    }
-  }
-
-  // --- 5. METADATA PROVIDER ---
+  // --- 4. METADATA PROVIDER ---
   const MetadataProvider = {
     cache: new Map(),
     activeAbortController: null,
@@ -306,7 +206,7 @@
           category: 'Direct Text / Payload',
           confidence: 'Basic detection',
           brandColor: '#0F172A',
-          badgeText: 'QR',
+          badgeText: '',
           imageCandidates: []
         };
         this.cache.set(normalized, rawRes);
@@ -320,7 +220,7 @@
       let platform = host.split('.')[0].toUpperCase();
       let displayName = platform;
       let category = 'Web Destination';
-      let confidence = 'Structural path detection';
+      let confidence = 'Structural detection';
       let brandColor = '#2563EB';
 
       const matchesDomain = (target) => host === target || host.endsWith(`.${target}`);
@@ -361,7 +261,7 @@
         category,
         confidence,
         brandColor,
-        badgeText: 'QR',
+        badgeText: '',
         imageCandidates: [{
           priority: 4,
           type: 'favicon',
@@ -375,7 +275,7 @@
     }
   };
 
-  // --- 6. 12 PRESETS ---
+  // --- 5. 12 PRESETS ---
   const PRESETS = [
     { id: 'minimal', name: 'Minimal', dot: 'square', eye: 'square', fg: '#0F172A', bg: '#FFFFFF', grad: false, ecc: 'H', frame: 'none', frameText: 'SCAN ME' },
     { id: 'professional', name: 'Professional', dot: 'rounded', eye: 'square', fg: '#1E3A8A', bg: '#F8FAFC', grad: false, ecc: 'H', frame: 'badge-bottom', frameText: 'LEARN MORE' },
@@ -391,7 +291,7 @@
     { id: 'playful', name: 'Playful', dot: 'dots', eye: 'square', fg: '#EA580C', bg: '#FFF7ED', grad: true, gradColor: '#EAB308', ecc: 'H', frame: 'badge-bottom', frameText: 'OPEN' }
   ];
 
-  // --- 7. TELEMETRY & CONTRAST ---
+  // --- 6. TELEMETRY & CONTRAST ---
   const TelemetryEngine = {
     getLuminance(hex) {
       const clean = hex.replace('#', '');
@@ -413,22 +313,25 @@
       return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
     },
 
-    evaluateAndRepair(moduleCount, isExportMode = false) {
+    evaluateAndRepair(moduleCount) {
       if (!state.url) {
         document.getElementById('contrastVal').textContent = '—';
         document.getElementById('logoAreaVal').textContent = '—';
         document.getElementById('eccVal').textContent = '—';
         document.getElementById('scanStatusText').textContent = 'Awaiting Input';
-        return { sideCells: 0 };
+        return { sideCells: 0, bannerWidthCells: 0, bannerHeightCells: 0 };
       }
 
-      // If text is active, do not cut a center square
+      // Check if In-Matrix QR Banner Text is active
       if (state.options.qrText && state.options.qrText.trim()) {
+        const text = state.options.qrText.trim().toUpperCase().slice(0, 10);
+        const bannerHeight = 5;
+        const bannerWidth = Math.min(moduleCount - 16, Math.max(9, text.length * 2 + 4));
         const contrast = this.getContrast(state.options.fgColor, state.options.bgColor);
         document.getElementById('contrastVal').textContent = `${contrast.toFixed(1)}:1`;
-        document.getElementById('logoAreaVal').textContent = '0% (Text Active)';
+        document.getElementById('logoAreaVal').textContent = 'Text Banner';
         document.getElementById('eccVal').textContent = state.options.ecc;
-        return { sideCells: 0 };
+        return { sideCells: 0, bannerWidthCells: bannerWidth, bannerHeightCells: bannerHeight };
       }
 
       // Center logo calculation
@@ -446,11 +349,11 @@
       document.getElementById('logoAreaVal').textContent = side > 0 ? `${Math.round((side * side) / (moduleCount * moduleCount) * 100)}%` : '0%';
       document.getElementById('eccVal').textContent = state.options.ecc;
 
-      return { sideCells: side };
+      return { sideCells: side, bannerWidthCells: 0, bannerHeightCells: 0 };
     }
   };
 
-  // --- 8. GEOMETRY ENGINE ---
+  // --- 7. GEOMETRY ENGINE ---
   const GeometryEngine = {
     computeLayout(baseSize, moduleCount, quietZone, frameStyle) {
       const qrTotalModules = moduleCount + quietZone * 2;
@@ -485,7 +388,7 @@
     }
   };
 
-  // --- 9. RENDERER (CANVAS & SVG) ---
+  // --- 8. RENDERER (CANVAS & SVG) ---
   const QRRenderer = {
     getQRMatrix() {
       if (!state.url || typeof qrcode === 'undefined') return null;
@@ -503,11 +406,20 @@
       return (r < 7 && c < 7) || (r < 7 && c >= count - 7) || (r >= count - 7 && c < 7);
     },
 
-    isCenterReserved(r, c, count, sideCells) {
-      if (!sideCells || sideCells <= 0) return false;
-      const half = Math.floor(sideCells / 2);
+    isCenterReserved(r, c, count, sideCells, bannerW, bannerH) {
       const mid = Math.floor(count / 2);
-      return (r >= mid - half && r <= mid + half && c >= mid - half && c <= mid + half);
+      // Logo cutout
+      if (sideCells > 0) {
+        const half = Math.floor(sideCells / 2);
+        if (r >= mid - half && r <= mid + half && c >= mid - half && c <= mid + half) return true;
+      }
+      // In-matrix banner text cutout
+      if (bannerW > 0 && bannerH > 0) {
+        const halfW = Math.floor(bannerW / 2);
+        const halfH = Math.floor(bannerH / 2);
+        if (r >= mid - halfH && r <= mid + halfH && c >= mid - halfW && c <= mid + halfW) return true;
+      }
+      return false;
     },
 
     renderCanvas(canvas, requestedSize = 480, isExport = false) {
@@ -531,12 +443,9 @@
       if (!qr) return;
 
       const moduleCount = qr.getModuleCount();
-      const footprint = TelemetryEngine.evaluateAndRepair(moduleCount, isExport);
+      const footprint = TelemetryEngine.evaluateAndRepair(moduleCount);
       const functionMask = QRStructure.createFunctionModuleMask(moduleCount);
       const geo = GeometryEngine.computeLayout(baseSize, moduleCount, state.options.quietZone, state.options.frameStyle);
-
-      // In-matrix text computation
-      const textPlacement = QRTextEngine.computePlacement(moduleCount, state.options.qrText);
 
       canvas.width = geo.totalWidth;
       canvas.height = geo.totalHeight;
@@ -560,32 +469,9 @@
       for (let r = 0; r < moduleCount; r++) {
         for (let c = 0; c < moduleCount; c++) {
           if (this.isFinderEyeRegion(r, c, moduleCount)) continue;
-          if (this.isCenterReserved(r, c, moduleCount, footprint.sideCells)) continue;
+          if (this.isCenterReserved(r, c, moduleCount, footprint.sideCells, footprint.bannerWidthCells, footprint.bannerHeightCells)) continue;
 
-          let isDark = qr.isDark(r, c);
-
-          // Apply In-Matrix Text with high-contrast island padding
-          if (textPlacement &&
-              r >= textPlacement.startRow && r < textPlacement.startRow + textPlacement.paddedHeight &&
-              c >= textPlacement.startCol && c < textPlacement.startCol + textPlacement.paddedWidth) {
-
-            const innerR = r - textPlacement.startRow - 1;
-            const innerC = c - textPlacement.startCol - 1;
-
-            if (innerR >= 0 && innerR < textPlacement.textHeight && innerC >= 0 && innerC < textPlacement.textWidth) {
-              const isGlyphPixel = textPlacement.matrix[innerR][innerC] === 1;
-              if (state.options.qrTextMode === 'dot') {
-                isDark = isGlyphPixel;
-              } else {
-                isDark = !isGlyphPixel;
-              }
-            } else {
-              // 1-module quiet border around text to make it extremely clear
-              isDark = state.options.qrTextMode === 'dot' ? false : true;
-            }
-          }
-
-          if (isDark) {
+          if (qr.isDark(r, c)) {
             const x = (c + geo.quietZone) * geo.cellSize;
             const y = geo.topOffset + (r + geo.quietZone) * geo.cellSize;
 
@@ -613,9 +499,12 @@
       this.drawCanvasEye(ctx, (geo.quietZone + moduleCount - 7) * geo.cellSize, geo.topOffset + geo.quietZone * geo.cellSize, eyeDim, geo.cellSize, fill);
       this.drawCanvasEye(ctx, geo.quietZone * geo.cellSize, geo.topOffset + (geo.quietZone + moduleCount - 7) * geo.cellSize, eyeDim, geo.cellSize, fill);
 
-      // Logo (only when text is not overriding center)
-      if (footprint.sideCells > 0 && (!state.options.qrText || !state.options.qrText.trim())) {
-        this.drawCanvasCenter(ctx, geo, footprint.sideCells, isExport);
+      // IN-MATRIX TEXT BANNER
+      if (state.options.qrText && state.options.qrText.trim()) {
+        this.drawCanvasTextBanner(ctx, geo, footprint.bannerWidthCells, footprint.bannerHeightCells, fill);
+      } else if (footprint.sideCells > 0) {
+        // Logo (only when no QR text)
+        this.drawCanvasCenterLogo(ctx, geo, footprint.sideCells, isExport);
       }
 
       // Frame
@@ -644,7 +533,32 @@
       ctx.fillRect(x + cellSize * 2, y + cellSize * 2, cellSize * 3, cellSize * 3);
     },
 
-    drawCanvasCenter(ctx, geo, sideCells, isExport) {
+    // Draws a crisp, stylish text banner strictly within the matrix center
+    drawCanvasTextBanner(ctx, geo, widthCells, heightCells, fill) {
+      const bannerW = widthCells * geo.cellSize;
+      const bannerH = heightCells * geo.cellSize;
+      const x = (geo.baseSize - bannerW) / 2;
+      const y = geo.topOffset + (geo.baseSize - bannerH) / 2;
+
+      // Banner background
+      ctx.fillStyle = fill;
+      this.roundRect(ctx, x, y, bannerW, bannerH, 6);
+      ctx.fill();
+
+      // Outer border to distinguish from adjacent modules
+      ctx.lineWidth = Math.max(2, geo.cellSize * 0.4);
+      ctx.strokeStyle = state.options.bgColor;
+      ctx.stroke();
+
+      // Text inside banner
+      ctx.fillStyle = state.options.bgColor;
+      ctx.font = `900 ${Math.round(bannerH * 0.58)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(state.options.qrText.trim().toUpperCase().slice(0, 10), x + bannerW / 2, y + bannerH / 2);
+    },
+
+    drawCanvasCenterLogo(ctx, geo, sideCells, isExport) {
       const pixelSize = sideCells * geo.cellSize;
       const x = (geo.baseSize - pixelSize) / 2;
       const y = geo.topOffset + (geo.baseSize - pixelSize) / 2;
@@ -728,11 +642,10 @@
       if (!qr) return '';
 
       const moduleCount = qr.getModuleCount();
-      const footprint = TelemetryEngine.evaluateAndRepair(moduleCount, true);
+      const footprint = TelemetryEngine.evaluateAndRepair(moduleCount);
       const functionMask = QRStructure.createFunctionModuleMask(moduleCount);
       const baseSize = 512;
       const geo = GeometryEngine.computeLayout(baseSize, moduleCount, state.options.quietZone, state.options.frameStyle);
-      const textPlacement = QRTextEngine.computePlacement(moduleCount, state.options.qrText);
 
       let defs = '';
       let fillAttr = `fill="${state.options.fgColor}"`;
@@ -751,26 +664,9 @@
       for (let r = 0; r < moduleCount; r++) {
         for (let c = 0; c < moduleCount; c++) {
           if (this.isFinderEyeRegion(r, c, moduleCount)) continue;
-          if (this.isCenterReserved(r, c, moduleCount, footprint.sideCells)) continue;
+          if (this.isCenterReserved(r, c, moduleCount, footprint.sideCells, footprint.bannerWidthCells, footprint.bannerHeightCells)) continue;
 
-          let isDark = qr.isDark(r, c);
-
-          if (textPlacement &&
-              r >= textPlacement.startRow && r < textPlacement.startRow + textPlacement.paddedHeight &&
-              c >= textPlacement.startCol && c < textPlacement.startCol + textPlacement.paddedWidth) {
-
-            const innerR = r - textPlacement.startRow - 1;
-            const innerC = c - textPlacement.startCol - 1;
-
-            if (innerR >= 0 && innerR < textPlacement.textHeight && innerC >= 0 && innerC < textPlacement.textWidth) {
-              const isGlyphPixel = textPlacement.matrix[innerR][innerC] === 1;
-              isDark = state.options.qrTextMode === 'dot' ? isGlyphPixel : !isGlyphPixel;
-            } else {
-              isDark = state.options.qrTextMode === 'dot' ? false : true;
-            }
-          }
-
-          if (isDark) {
+          if (qr.isDark(r, c)) {
             const x = (c + geo.quietZone) * geo.cellSize;
             const y = geo.topOffset + (r + geo.quietZone) * geo.cellSize;
             modulesSVG += `<rect x="${x}" y="${y}" width="${geo.cellSize}" height="${geo.cellSize}" ${fillAttr} />`;
@@ -791,16 +687,30 @@
         renderEye((geo.quietZone + moduleCount - 7) * geo.cellSize, geo.topOffset + geo.quietZone * geo.cellSize, eyeDim, geo.cellSize) +
         renderEye(geo.quietZone * geo.cellSize, geo.topOffset + (geo.quietZone + moduleCount - 7) * geo.cellSize, eyeDim, geo.cellSize);
 
+      // SVG Text Banner
+      let bannerSVG = '';
+      if (state.options.qrText && state.options.qrText.trim()) {
+        const bannerW = footprint.bannerWidthCells * geo.cellSize;
+        const bannerH = footprint.bannerHeightCells * geo.cellSize;
+        const x = (geo.baseSize - bannerW) / 2;
+        const y = geo.topOffset + (geo.baseSize - bannerH) / 2;
+        bannerSVG = `
+          <rect x="${x}" y="${y}" width="${bannerW}" height="${bannerH}" rx="6" ${fillAttr} stroke="${state.options.bgColor}" stroke-width="${geo.cellSize * 0.4}" />
+          <text x="${x + bannerW / 2}" y="${y + bannerH / 2}" fill="${state.options.bgColor}" font-size="${bannerH * 0.58}" font-weight="900" font-family="sans-serif" text-anchor="middle" dominant-baseline="central">${escapeXml(state.options.qrText.trim().toUpperCase().slice(0, 10))}</text>
+        `;
+      }
+
       return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${geo.totalWidth} ${geo.totalHeight}">
         ${defs}
         <rect width="${geo.totalWidth}" height="${geo.totalHeight}" fill="${state.options.bgColor}" />
         ${modulesSVG}
         ${eyesSVG}
+        ${bannerSVG}
       </svg>`;
     }
   };
 
-  // --- 10. UI INITIALIZATION & COMPLETE EVENT LISTENERS ---
+  // --- 9. UI EVENT SYNC & COMPLETE BINDINGS ---
   function syncControlsFromState() {
     const setVal = (id, val) => {
       const el = document.getElementById(id);
@@ -816,7 +726,6 @@
     setVal('fgGradColor', state.options.fgGradColor);
     setVal('fgGradColorText', state.options.fgGradColor);
     setVal('qrTextInput', state.options.qrText);
-    setVal('qrTextModeSelect', state.options.qrTextMode);
     setVal('frameStyleSelect', state.options.frameStyle);
     setVal('frameText', state.options.frameText);
     setVal('eccSelect', state.options.ecc);
@@ -919,7 +828,7 @@
       };
     }
 
-    // Shuffle Smart Button
+    // Shuffle Button
     const shuffleSmartBtn = document.getElementById('shuffleSmartBtn');
     if (shuffleSmartBtn) {
       shuffleSmartBtn.onclick = () => {
@@ -931,7 +840,7 @@
       };
     }
 
-    // Manual Custom Controls Handlers
+    // Manual Custom Controls Listeners
     const bindChange = (id, prop) => {
       const el = document.getElementById(id);
       if (el) {
@@ -950,7 +859,6 @@
     bindChange('frameStyleSelect', 'frameStyle');
     bindChange('eccSelect', 'ecc');
 
-    // Quiet Zone
     const qz = document.getElementById('quietZoneSelect');
     if (qz) {
       qz.onchange = (e) => {
@@ -959,7 +867,7 @@
       };
     }
 
-    // Colors
+    // Colors Listeners
     const bindColor = (pickerId, textId, prop) => {
       const picker = document.getElementById(pickerId);
       const text = document.getElementById(textId);
@@ -999,16 +907,15 @@
       };
     }
 
-    // --- QR TEXT APPLY & CLEAR ACTIONS ---
+    // --- QR TEXT APPLY & CLEAR LISTENERS ---
     const qrTextInput = document.getElementById('qrTextInput');
     const qrTextApplyBtn = document.getElementById('qrTextApplyBtn');
     const qrTextClearBtn = document.getElementById('qrTextClearBtn');
-    const qrTextModeSelect = document.getElementById('qrTextModeSelect');
 
     if (qrTextApplyBtn) {
       qrTextApplyBtn.onclick = () => {
         if (!qrTextInput) return;
-        state.options.qrText = qrTextInput.value.trim().toUpperCase().slice(0, 8);
+        state.options.qrText = qrTextInput.value.trim().toUpperCase().slice(0, 10);
         render();
       };
     }
@@ -1022,13 +929,6 @@
       };
     }
 
-    if (qrTextModeSelect) {
-      qrTextModeSelect.onchange = (e) => {
-        state.options.qrTextMode = e.target.value;
-        if (state.options.qrText) render();
-      };
-    }
-
     if (qrTextClearBtn) {
       qrTextClearBtn.onclick = () => {
         state.options.qrText = '';
@@ -1037,7 +937,7 @@
       };
     }
 
-    // Logo Upload & Size
+    // --- LOGO UPLOAD & SCALE SLIDER ---
     const logoUpload = document.getElementById('logoUpload');
     const logoSizeSlider = document.getElementById('logoSizeSlider');
     const logoSizeVal = document.getElementById('logoSizeVal');
@@ -1079,7 +979,7 @@
       };
     }
 
-    // Export Buttons
+    // Export Handlers
     const downloadPngBtn = document.getElementById('downloadPngBtn');
     if (downloadPngBtn) {
       downloadPngBtn.onclick = () => {
