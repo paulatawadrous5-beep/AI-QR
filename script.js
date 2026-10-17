@@ -1012,7 +1012,23 @@
     if (qrTextApplyBtn) {
       qrTextApplyBtn.onclick = () => {
         if (!qrTextInput) return;
-        state.options.qrText = qrTextInput.value.trim().toUpperCase().slice(0, 10);
+        const text = qrTextInput.value.trim().toUpperCase().slice(0, 10);
+        state.options.qrText = text;
+        if (text) {
+          // Mutual exclusion: in-matrix text replaces any custom uploaded logo
+          state.customLogoImg = null;
+          state.customLogoDataUrl = null;
+          const logoUploadEl = document.getElementById('logoUpload');
+          if (logoUploadEl) logoUploadEl.value = '';
+          if (state.options.logoMode === 'custom') {
+            state.options.logoMode = 'auto';
+            document.querySelectorAll('input[name="logoMode"]').forEach(r => {
+              r.checked = r.value === 'auto';
+            });
+            const uploadCont = document.getElementById('customUploadContainer');
+            if (uploadCont) uploadCont.classList.add('hidden-field');
+          }
+        }
         render();
       };
     }
@@ -1069,6 +1085,10 @@
               state.customLogoDataUrl = ev.target.result;
               // Automatically switch mode to custom so the logo is immediately rendered
               state.options.logoMode = 'custom';
+              // Mutual exclusion: a custom logo replaces any in-matrix text
+              state.options.qrText = '';
+              const qrTextInputEl = document.getElementById('qrTextInput');
+              if (qrTextInputEl) qrTextInputEl.value = '';
               document.querySelectorAll('input[name="logoMode"]').forEach(r => {
                 r.checked = r.value === 'custom';
               });
